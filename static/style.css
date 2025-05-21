@@ -1,0 +1,194 @@
+/* ===== Reset básico ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== Tipografia e cores ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f5f6fa;
+  color: #333;
+  line-height: 1.6;
+}
+a {
+  color: #3366cc;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Container ===== */
+.container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* ===== Cabeçalho ===== */
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #222;
+}
+
+/* ===== Botões ===== */
+.btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin: 0.25rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.btn-primary {
+  background: #3366cc;
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #254ea1;
+}
+.btn-danger {
+  background: #cc3333;
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #a12828;
+}
+.btn-disabled {
+  background: #aaa;
+  color: #eee;
+  cursor: not-allowed;
+}
+
+/* ===== Seções ===== */
+.section {
+  background: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin-bottom: 1.5rem;
+}
+.section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #222;
+}
+
+/* ===== Lista de vídeos ===== */
+.video-list {
+  list-style: none;
+}
+.video-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+.video-list li:last-child {
+  border-bottom: none;
+}
+
+/* ===== Upload form ===== */
+.upload-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.upload-form input[type="file"] {
+  flex: 1 1 auto;
+}
+.upload-form button {
+  flex: 0 0 auto;
+  margin-left: 0.5rem;
+}
+
+/* ===== Viewer ===== */
+#camera-viewer {
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* ===== Estilos para a tela de edição ===== */
+.edit-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.edit-header {
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.edit-header h1 {
+  font-size: 1.1rem;
+  word-break: break-all;
+}
+.file-path {
+  font-weight: 400;
+  color: #555;
+}
+.edit-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #fafafa;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.mobile-toolbar {
+  display: none;
+}
+#editor {
+  flex: 1;
+  width: 100%;
+  border: none;
+  padding: 1rem;
+  font-family: monospace;
+  font-size: 1rem;
+  line-height: 1.4;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  outline: none;
+  resize: none;
+}
+.edit-footer {
+  text-align: center;
+  padding: 0.75rem;
+  background: #fff;
+  box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  bottom: 0;
+}
+.edit-footer a {
+  color: #3366cc;
+  font-size: 0.95rem;
+}
+
+/* Ajuste responsivo para mobile */
+@media (max-width: 600px) {
+  .edit-toolbar { display: none; }
+  .mobile-toolbar {
+    display: flex;
+    justify-content: space-around;
+    position: sticky;
+    bottom: 0;
+    background: #fafafa;
+    padding: 0.5rem;
+    box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+  }
+  #editor {
+    height: calc(100vh - 160px);
+  }
+}

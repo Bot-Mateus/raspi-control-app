@@ -1,0 +1,28 @@
+# Ignorar cache do Python
+__pycache__/
+*.py[cod]
+
+# Ignorar ambiente virtual
+venv/
+
+# Ignorar arquivos temporários de editores
+*.swp
+*.swo
+*~
+
+# Ignorar arquivos de log
+*.log
+
+# Ignorar arquivos ocultos de sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar arquivos de build (caso use futuramente)
+build/
+dist/
+*.egg-info/
+
+# Arquivos de configuração pessoal
+.env
+.vscode/
+*.code-workspace

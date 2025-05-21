@@ -1,0 +1,916 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Arquivos do Servidor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+     :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-hover: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent: #5eead4;
+      --accent-hover: #2dd4bf;
+      --border: #334155;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --radius: 12px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      --transition: all 0.2s ease;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:var(--font); }
+    body { background:var(--bg-primary); color:var(--text-primary); min-height:100vh; font-size:15px; line-height:1.5; padding-bottom:90px; }
+    .file-item-inner a.file-details-link { color: inherit; text-decoration: none; }
+    .file-name { font-weight:500; font-size:15px; margin-bottom:4px; color:var(--text-primary); }
+    .file-meta { color:var(--text-secondary); font-size:12px; }
+    .action-button { color:var(--accent); background:none; border:none; width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer; border-radius:15px; transition:var(--transition); z-index:2; }
+    .action-button:hover { background-color:var(--bg-hover); color:var(--text-primary); }
+    .action-menu { position:absolute; right:0; top:100%; background-color:var(--bg-secondary); border-radius:var(--radius); box-shadow:var(--shadow); min-width:180px; z-index:20; display:none; flex-direction:column; }
+    .action-menu.show { display:flex; }
+    .action-menu-item { padding:12px 16px; color:var(--text-primary); }
+    .action-menu-item:hover { background-color:var(--bg-hover); }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .app-container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    .top-bar {
+      display: flex;
+      align-items: center;
+      padding: 20px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: var(--bg-primary);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    
+    .back-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      margin-right: 16px;
+      transition: var(--transition);
+    }
+    
+    .back-button:hover {
+      background-color: var(--bg-hover);
+      transform: translateX(-2px);
+    }
+    
+    .back-icon {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      flex: 1;
+      letter-spacing: -0.3px;
+      background: linear-gradient(45deg, var(--text-primary), var(--accent));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--bg-secondary);
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .icon-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+    
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      padding: 4px 24px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background-color: var(--bg-primary);
+    }
+    
+    .breadcrumb::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .breadcrumb-item {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+    
+    .breadcrumb-item:hover {
+      color: var(--accent);
+    }
+    
+    .breadcrumb-item.active {
+      color: var(--accent);
+      pointer-events: none;
+    }
+    
+    .breadcrumb-chevron {
+      margin: 0 8px;
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+    
+    .file-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      padding: 16px 24px;
+    }
+    
+    .file-list {
+      list-style: none;
+      padding: 8px 16px;
+    }
+    
+    /* CORREÇÃO PRINCIPAL */
+    .file-item {
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius);
+      transition: var(--transition);
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      position: relative;  
+      overflow: visible;
+    }
+    
+    .file-item:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+      border-color: var(--accent);
+      z-index: 10;
+    }
+    
+    .file-item-inner {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      text-decoration: none;
+      color: var(--text-primary);
+      position: relative;
+    }
+    
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 16px;
+      background-color: rgba(94, 234, 212, 0.1);
+      border-radius: 10px;
+      transition: var(--transition);
+    }
+    
+    .file-item:hover .file-icon {
+      background-color: rgba(94, 234, 212, 0.2);
+    }
+    
+    .dir-icon {
+      color: var(--accent);
+    }
+    
+    .file-icon-text {
+      color: var(--accent);
+    }
+    
+    .file-details {
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .file-name {
+      font-weight: 500;
+      font-size: 15px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .file-meta {
+      color: var(--text-secondary);
+      font-size: 12px;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* CORREÇÕES NO MENU */
+    .file-actions {
+      position: relative;
+      z-index: 1; /* Novo */
+    }
+    
+    .action-menu {
+      position: absolute;
+      top: 35px !important; /* Ajuste */
+      right: -10px !important; /* Ajuste */
+      z-index: 1000; /* Novo */
+      transform: translateZ(100px); /* Força nova camada de composição */
+      background-color: var(--bg-secondary);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 180px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    
+    .action-menu.show {
+      display: flex;
+    }
+    
+    .action-menu-item {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: var(--transition);
+    }
+    
+    .action-menu-item:hover {
+      background-color: var(--bg-hover);
+    }
+    
+    .action-menu-item.danger {
+      color: #f87171;
+    }
+    
+    .action-menu-item.danger:hover {
+      background-color: rgba(248, 113, 113, 0.1);
+    }
+    
+    .action-menu-item-icon {
+      margin-right: 12px;
+      opacity: 0.8;
+    }
+    
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, var(--accent), #38bdf8);
+      color: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow);
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      z-index: 30;
+      transition: var(--transition);
+    }
+    
+    .fab:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+    
+    .fab svg {
+      width: 24px;
+      height: 24px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    
+    .create-modal {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--bg-secondary);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 32px 24px;
+      z-index: 40;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .create-modal.show {
+      transform: translateY(0);
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: var(--accent);
+    }
+    
+    .create-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .form-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .form-input, .form-select {
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 15px;
+      transition: var(--transition);
+    }
+    
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.1);
+    }
+    
+    .form-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+      background-position: right 12px center;
+      background-repeat: no-repeat;
+      background-size: 20px;
+      padding-right: 40px;
+    }
+    
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 32px;
+    }
+    
+    .modal-button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .modal-button-cancel {
+      background-color: transparent;
+      color: var(--text-secondary);
+    }
+    
+    .modal-button-cancel:hover {
+      color: var(--text-primary);
+    }
+    
+    .modal-button-submit {
+      background-color: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    .modal-button-submit:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      z-index: 35;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .overlay.show {
+      display: block;
+      opacity: 1;
+    }
+    
+    .clipboard-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--bg-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .clipboard-banner span {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    
+    .clipboard-banner div {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn {
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .btn-danger {
+      background-color: rgba(248, 113, 113, 0.1);
+      color: #f87171;
+    }
+    
+    .btn-danger:hover {
+      background-color: rgba(248, 113, 113, 0.2);
+    }
+    
+    .btn-success {
+      background-color: rgba(94, 234, 212, 0.1);
+      color: var(--accent);
+    }
+    
+    .btn-success:hover {
+      background-color: rgba(94, 234, 212, 0.2);
+    }
+    
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    .empty-text {
+      color: var(--text-secondary);
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    
+    .file-view-toggle {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: var(--bg-secondary);
+      border-radius: 20px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      box-shadow: var(--shadow);
+      z-index: 20;
+    }
+    
+    .view-option {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition);
+    }
+    
+    .view-option.active {
+      background-color: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    @media (max-width: 768px) {
+      .file-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 12px;
+        padding: 12px 16px;
+      }
+      
+      .file-list {
+        padding: 4px 12px;
+      }
+      
+      .modal-title {
+        font-size: 18px;
+      }
+      
+      .top-bar {
+        padding: 16px;
+      }
+      
+      .breadcrumb {
+        padding: 4px 16px 12px;
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .file-item {
+      animation: fadeIn 0.3s ease forwards;
+      opacity: 0;
+    }
+    
+    .file-item:nth-child(1) { animation-delay: 0.05s; }
+    .file-item:nth-child(2) { animation-delay: 0.1s; }
+    .file-item:nth-child(3) { animation-delay: 0.15s; }
+    .file-item:nth-child(4) { animation-delay: 0.2s; }
+    .file-item:nth-child(5) { animation-delay: 0.25s; }
+    .file-item:nth-child(6) { animation-delay: 0.3s; }
+    .file-item:nth-child(7) { animation-delay: 0.35s; }
+    .file-item:nth-child(8) { animation-delay: 0.4s; }
+    .file-item:nth-child(n+9) { animation-delay: 0.45s; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Clipboard banner -->
+    {% if clipboard %}
+    <div class="clipboard-banner">
+      <span>{{ clipboard.action|capitalize }}: {{ clipboard.path }}</span>
+      <div>
+        <a href="/files/cancel" class="btn btn-danger">Cancelar</a>
+        <form action="/files/paste" method="post" style="display:inline;">
+          <input type="hidden" name="target_path" value="{{ cur_path }}">
+          <button class="btn btn-success" type="submit">Colar aqui</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <a href="/" class="back-button">
+        <svg class="back-icon" viewBox="0 0 24 24">
+          <path d="M19 12H5M12 19l-7-7 7-7"></path>
+        </svg>
+      </a>
+      <h1 class="page-title">Arquivos do Servidor</h1>
+      <div class="action-buttons">
+        <button class="icon-btn" id="view-toggle-btn" onclick="toggleView()">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 5h18M3 12h18M3 19h18"></path>
+          </svg>
+        </button>
+        <button class="icon-btn" onclick="toggleMainMenu()">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      {% set parts = cur_path.split('/') %}
+      <a href="/files/" class="breadcrumb-item">Home</a>
+      {% for part in parts if part %}
+        <span class="breadcrumb-chevron">›</span>
+        {% set path_so_far = parts[:loop.index]|join('/') %}
+        {% if loop.last %}
+          <span class="breadcrumb-item active">{{ part }}</span>
+        {% else %}
+          <a href="/files/{{ path_so_far }}" class="breadcrumb-item">{{ part }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- File list -->
+    <div id="file-container" class="file-list">
+      {% if items|length == 0 %}
+      <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <p class="empty-text">Pasta vazia. Clique no botão + para adicionar arquivos ou pastas.</p>
+      </div>
+      {% else %}
+      {% for it in items %}
+      <div class="file-item" style="animation-delay: {{ loop.index * 0.05 }}s">
+        <div class="file-item-inner">
+          <a href="/files/{{ it.path }}" class="file-details-link" style="display: flex; flex: 1;">
+            <div class="file-icon">
+              {% if it.is_dir %}
+                <span class="dir-icon">📁</span>
+              {% else %}
+                <span class="file-icon-text">📄</span>
+              {% endif %}
+            </div>
+            <div class="file-details">
+              <div class="file-name">{{ it.name }}</div>
+              <span class="file-meta">{{ it.size }} bytes — {{ it.mtime }}</span>
+            </div>
+          </a>
+          <div class="file-actions">
+            <button class="action-button" onclick="toggleMenu('menu-{{ loop.index }}', event)">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+              </svg>
+            </button>
+            <div id="menu-{{ loop.index }}" class="action-menu">
+              {% if it.is_dir %}
+                <a href="/files/download_folder/{{ it.path }}" class="action-menu-item">
+                  <span class="action-menu-item-icon">⬇️</span> Baixar
+                </a>
+              {% endif %}
+              <a href="#" onclick="copyPrompt('{{ it.path }}');return false;" class="action-menu-item">
+                <span class="action-menu-item-icon">📋</span> Copiar
+              </a>
+              <a href="#" onclick="movePrompt('{{ it.path }}');return false;" class="action-menu-item">
+                <span class="action-menu-item-icon">📦</span> Mover
+              </a>
+              <a href="#" onclick="renamePrompt('{{ it.name }}','{{ it.path }}');return false;" class="action-menu-item">
+                <span class="action-menu-item-icon">✏️</span> Renomear
+              </a>
+              <a href="#" class="action-menu-item danger" onclick="confirmDelete('{{ it.name }}','{{ it.path }}');return false;">
+                <span class="action-menu-item-icon">🗑️</span> Excluir
+              </a>
+            </div>
+            <form id="delete-form-{{ it.path }}" action="/files/delete/{{ it.path }}" method="post" style="display:none;"></form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- Create FAB -->
+    <button class="fab" onclick="showCreateModal()">
+      <svg viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+
+    <!-- Create Modal -->
+    <div class="create-modal" id="create-modal">
+      <h2 class="modal-title">Criar novo</h2>
+      <form class="create-form" action="/files/create" method="post">
+        <input type="hidden" name="current_path" value="{{ cur_path }}">
+        <div class="form-group">
+          <label class="form-label" for="new-name">Nome</label>
+          <input type="text" id="new-name" name="new_name" class="form-input" placeholder="Nome do arquivo/pasta" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-type">Tipo</label>
+          <select id="new-type" name="new_type" class="form-select">
+            <option value="file">Arquivo</option>
+            <option value="dir">Pasta</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="modal-button modal-button-cancel" onclick="hideCreateModal()">Cancelar</button>
+          <button type="submit" class="modal-button modal-button-submit">Criar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="hideCreateModal()"></div>
+  </div>
+
+  <script>
+    // Current view mode (list or grid)
+    let currentView = localStorage.getItem('file-view') || 'list';
+    
+    // Initialize the correct view on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      switchView(currentView, true);
+    });
+    
+    // Toggle menu
+    function toggleMenu(id, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      document.querySelectorAll('.action-menu').forEach(m => {
+        if (m.id !== id) m.classList.remove('show');
+      });
+      document.getElementById(id).classList.toggle('show');
+    }
+    
+    // Confirm delete
+    function confirmDelete(name, path) {
+      if (confirm(`Deseja excluir "${name}"?`)) {
+        document.getElementById(`delete-form-${path}`).submit();
+      }
+    }
+    
+    // Rename prompt
+    function renamePrompt(name, path) {
+      const newName = prompt(`Renomear "${name}" para:`, name);
+      if (newName && newName !== name) {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = '/files/rename';
+        
+        [['path', path], ['new_name', newName]].forEach(([k, v]) => {
+          const i = document.createElement('input');
+          i.type = 'hidden';
+          i.name = k;
+          i.value = v;
+          f.appendChild(i);
+        });
+        
+        document.body.appendChild(f);
+        f.submit();
+      }
+    }
+    
+    // Copy prompt
+    function copyPrompt(path) {
+      if (confirm(`Copiar "${path}"?`)) {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = '/files/copy';
+        
+        const i = document.createElement('input');
+        i.type = 'hidden';
+        i.name = 'path';
+        i.value = path;
+        f.appendChild(i);
+        
+        document.body.appendChild(f);
+        f.submit();
+      }
+    }
+    
+    // Move prompt
+    function movePrompt(path) {
+      if (confirm(`Mover "${path}"?`)) {
+        const f = document.createElement('form');
+        f.method = 'POST';
+        f.action = '/files/move';
+        
+        const i = document.createElement('input');
+        i.type = 'hidden';
+        i.name = 'path';
+        i.value = path;
+        f.appendChild(i);
+        
+        document.body.appendChild(f);
+        f.submit();
+      }
+    }
+    
+    // Show create modal
+    function showCreateModal() {
+      document.getElementById('create-modal').classList.add('show');
+      document.getElementById('overlay').classList.add('show');
+    }
+    
+    // Hide create modal
+    function hideCreateModal() {
+      document.getElementById('create-modal').classList.remove('show');
+      document.getElementById('overlay').classList.remove('show');
+    }
+    
+    // Toggle main menu
+    function toggleMainMenu() {
+      // Implementação futura do menu principal
+      alert('Menu principal');
+    }
+    
+    // Switch view between list and grid
+    function switchView(viewType, init = false) {
+      const container = document.getElementById('file-container');
+      
+      if (viewType === 'grid') {
+        container.className = 'file-grid';
+        currentView = 'grid';
+        updateViewToggleIcon('grid');
+      } else {
+        container.className = 'file-list';
+        currentView = 'list';
+        updateViewToggleIcon('list');
+      }
+      
+      if (!init) {
+        localStorage.setItem('file-view', viewType);
+      }
+    }
+    
+    // Update view toggle icon
+    function updateViewToggleIcon(viewType) {
+      const viewToggleBtn = document.getElementById('view-toggle-btn');
+      
+      if (viewType === 'grid') {
+        viewToggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>';
+      } else {
+        viewToggleBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h18"></path></svg>';
+      }
+    }
+    
+    // Toggle view on button click
+    function toggleView() {
+      const newView = currentView === 'list' ? 'grid' : 'list';
+      switchView(newView);
+    }
+    
+    // Close menus when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.action-button') && !e.target.closest('.action-menu')) {
+        document.querySelectorAll('.action-menu').forEach(m => m.classList.remove('show'));
+      }
+    });
+  </script>
+</body>
+</html>

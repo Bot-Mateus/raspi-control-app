@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Home Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-hover: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent: #5eead4;
+      --accent-hover: #2dd4bf;
+      --border: #334155;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --radius: 12px;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      --transition: all 0.2s ease;
+      --danger: #f43f5e;
+      --danger-hover: #e11d48;
+      --sidebar-width: 240px;
+    }
+    
+    * { margin:0; padding:0; box-sizing:border-box; font-family:var(--font); }
+    
+    body { 
+      background:var(--bg-primary); 
+      color:var(--text-primary); 
+      min-height:100vh; 
+      font-size:15px; 
+      line-height:1.5; 
+      display: flex;
+    }
+    
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100vh;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+    
+    .sidebar-hidden {
+      transform: translateX(-100%);
+    }
+    
+    .logo {
+      padding: 0 1.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .logo-icon {
+      font-size: 1.5rem;
+    }
+    
+    .logo-text {
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: var(--accent);
+      background: linear-gradient(45deg, var(--text-primary), var(--accent));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .nav {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+      border-left: 3px solid transparent;
+    }
+    
+    .nav-item.active {
+      color: var(--accent);
+      background: rgba(94, 234, 212, 0.1);
+      border-left: 3px solid var(--accent);
+    }
+    
+    .nav-item:hover:not(.active) {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+    
+    .nav-icon {
+      font-size: 1.25rem;
+      margin-right: 0.75rem;
+      width: 24px;
+      text-align: center;
+    }
+    
+    .main {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      padding: 1.5rem;
+      transition: var(--transition);
+      min-height: 100vh;
+      width: calc(100% - var(--sidebar-width));
+    }
+    
+    .main-full {
+      margin-left: 0;
+      width: 100%;
+    }
+    
+    .top-bar {
+      display: flex;
+      align-items: center;
+      padding: 0 0 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: var(--bg-primary);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    
+    .back-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      margin-right: 16px;
+      transition: var(--transition);
+    }
+    
+    .back-button:hover {
+      background-color: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+    
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      flex: 1;
+      letter-spacing: -0.3px;
+      background: linear-gradient(45deg, var(--text-primary), var(--accent));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 5s ease infinite;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .icon-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: var(--bg-secondary);
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .icon-btn:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+    
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    
+    .menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .card {
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      animation: fadeIn 0.3s ease forwards;
+      opacity: 0;
+    }
+    
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+      border-color: var(--accent);
+    }
+    
+    .card-header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .card-title {
+      font-weight: 500;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .card-body {
+      padding: 16px;
+    }
+    
+    .card-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .stat-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-hover);
+      border-radius: 3px;
+      margin: 12px 0 8px;
+      overflow: hidden;
+    }
+    
+    .stat-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 1s ease;
+    }
+    
+    .camera-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: var(--bg-primary);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .camera-feed {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .camera-status {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    
+    .list {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--bg-hover) var(--bg-primary);
+    }
+    
+    .list::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .list::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+    
+    .list::-webkit-scrollbar-thumb {
+      background-color: var(--bg-hover);
+      border-radius: 6px;
+    }
+    
+    .list-item {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    
+    .list-item:hover {
+      background: var(--bg-hover);
+    }
+    
+    .list-item:last-child {
+      border-bottom: none;
+    }
+    
+    .list-item a {
+      color: var(--text-primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    
+    .list-item a:hover {
+      color: var(--accent);
+    }
+    
+    .empty-list {
+      padding: 24px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-hover);
+      transform: translateY(-2px);
+    }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    
+    .btn-outline:hover {
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+    }
+    
+    .alert {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .alert-warning {
+      background: rgba(244, 63, 94, 0.1);
+      color: var(--danger);
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-control {
+      display: flex;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 8px;
+      width: 100%;
+      color: var(--text-primary);
+      transition: var(--transition);
+    }
+    
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.1);
+    }
+    
+    .file-input {
+      position: relative;
+    }
+    
+    .file-input input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+    
+    .file-input label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      transition: var(--transition);
+    }
+    
+    .file-input label:hover {
+      background: rgba(51, 65, 85, 0.8);
+    }
+    
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card:nth-child(1) { animation-delay: 0.05s; }
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .card:nth-child(3) { animation-delay: 0.15s; }
+    .card:nth-child(4) { animation-delay: 0.2s; }
+    .card:nth-child(n+5) { animation-delay: 0.25s; }
+    
+    @media (max-width: 900px) {
+      .menu-toggle {
+        display: block;
+      }
+      
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .main {
+        margin-left: 0;
+        width: 100%;
+      }
+      
+      .back-button {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .actions {
+        flex-direction: column;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="logo">
+      <span class="logo-icon">🏠</span>
+      <span class="logo-text">Home Control</span>
+    </div>
+    <nav class="nav">
+      <a href="#" class="nav-item active">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/files/" class="nav-item">
+        <span class="nav-icon">📁</span>
+        <span>Arquivos</span>
+      </a>
+      <a href="#" class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span>Configurações</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="top-bar">
+      <button class="menu-toggle" id="menu-toggle">☰</button>
+      <h1 class="page-title">Dashboard</h1>
+      <div class="action-buttons">
+        <button class="icon-btn" id="theme-toggle">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="grid">
+      <!-- Root -->
+      <div class="card" style="--used: {{ root_stats.used }}; --total: {{ root_stats.total }};">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>💾</span>
+            <span>{{ root_stats.label }}</span>
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="stat">
+            <div class="stat-value">{{ (root_stats.used / root_stats.total * 100) | round(1) }}%</div>
+            <div class="stat-bar">
+              <div class="stat-bar-fill"></div>
+            </div>
+            <small class="stat-label">{{ (root_stats.free/1e9)|round(1) }} GB livres de {{ (root_stats.total/1e9)|round(1) }} GB</small>
+          </div>
+        </div>
+      </div>
+      
+      <!-- SSD -->
+      {% if ssd_stats %}
+      <div class="card" style="--used: {{ ssd_stats.used }}; --total: {{ ssd_stats.total }};">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>💽</span>
+            <span>{{ ssd_stats.label }}</span>
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="stat">
+            <div class="stat-value">{{ (ssd_stats.used / ssd_stats.total * 100) | round(1) }}%</div>
+            <div class="stat-bar">
+              <div class="stat-bar-fill"></div>
+            </div>
+            <small class="stat-label">{{ (ssd_stats.free/1e9)|round(1) }} GB livres de {{ (ssd_stats.total/1e9)|round(1) }} GB</small>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <!-- RAM -->
+      <div class="card" style="--used: {{ ram_stats.used }}; --total: {{ ram_stats.total }};">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span>🧠</span>
+            <span>{{ ram_stats.label }}</span>
+          </h2>
+        </div>
+        <div class="card-body">
+          <div class="stat">
+            <div class="stat-value">{{ (ram_stats.used / ram_stats.total * 100) | round(1) }}%</div>
+            <div class="stat-bar">
+              <div class="stat-bar-fill"></div>
+            </div>
+            <small class="stat-label">{{ (ram_stats.free/1e6)|round(0) }} MB livres de {{ (ram_stats.total/1e6)|round(0) }} MB</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Camera Section -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <span>📹</span>
+          <span>Câmera</span>
+        </h2>
+      </div>
+      <div class="card-body">
+        {% if streaming %}
+        <div class="camera-container">
+          <img class="camera-feed"
+               src="http://{{ host }}:{{ port }}/?action=stream"
+               alt="Stream da câmera">
+          <div class="camera-status">
+            <span class="status-dot"></span>
+            <span>Streaming</span>
+          </div>
+        </div>
+        {% else %}
+        <div class="camera-container" style="display:flex; align-items:center; justify-content:center;">
+          <div style="text-align:center; color:var(--text-secondary);">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">📷</div>
+            <p>Câmera desligada</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card-footer">
+        <div class="actions">
+          <a class="btn btn-primary" href="/camera/start">
+            <svg viewBox="0 0 24 24" width="16" height="16" style="fill: currentColor;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Iniciar Stream
+          </a>
+          <a class="btn btn-danger" href="/camera/stop">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <rect x="6" y="6" width="12" height="12"></rect>
+            </svg>
+            Parar Stream
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Videos Section -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <span>🎬</span>
+          <span>Vídeos no SSD</span>
+        </h2>
+      </div>
+      <div class="card-body">
+        {% if not ssd_connected %}
+        <div class="alert alert-warning">
+          <span>⚠️</span>
+          <span>SSD não está conectado. Conecte o SSD para listar ou enviar vídeos.</span>
+        </div>
+        {% endif %}
+        
+        <div class="list">
+          {% for f in files %}
+          <div class="list-item">
+            <a href="/videos/download/{{ f }}">
+              <span>🎥</span>
+              <span>{{ f }}</span>
+            </a>
+          </div>
+          {% else %}
+          {% if ssd_connected %}
+          <div class="empty-list">Nenhum vídeo encontrado.</div>
+          {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="actions">
+          {% if ssd_connected %}
+          <form action="/videos/upload" method="post" enctype="multipart/form-data" style="width:100%;">
+            <div class="form-group file-input">
+              <input type="file" id="file-upload" name="file" accept="video/*" required>
+              <label for="file-upload">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span id="file-name">Selecionar vídeo</span>
+              </label>
+            </div>
+            <button class="btn btn-primary" type="submit" style="width:100%;">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Enviar
+            </button>
+          </form>
+          {% else %}
+          <button class="btn btn-outline" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Upload desativado
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inicializar barras de progresso
+      document.querySelectorAll('.stat-bar-fill').forEach(bar => {
+        const card = bar.closest('[style*="--used"]');
+        if (card) {
+          const used = parseFloat(card.style.getPropertyValue('--used'));
+          const total = parseFloat(card.style.getPropertyValue('--total'));
+          const percent = (used / total * 100).toFixed(1);
+          bar.style.width = `${percent}%`;
+          
+          // Adicionar cor baseada no uso
+          if (percent > 90) {
+            bar.style.background = 'var(--danger)';
+          } else if (percent > 70) {
+            bar.style.background = '#fb923c'; // Laranja
+          }
+        }
+      });
+      
+      // Toggle menu em dispositivos móveis
+      const menuToggle = document.getElementById('menu-toggle');
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('main');
+      
+      menuToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('active');
+      });
+      
+      // Tocar fora do menu fecha o menu em mobile
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 900 && 
+            !sidebar.contains(e.target) && 
+            !menuToggle.contains(e.target) && 
+            sidebar.classList.contains('active')) {
+          sidebar.classList.remove('active');
+        }
+      });
+      
+      // Exibir nome do arquivo selecionado
+      const fileInput = document.getElementById('file-upload');
+      const fileNameDisplay = document.getElementById('file-name');
+      
+      if (fileInput) {
+        fileInput.addEventListener('change', function() {
+          if (this.files && this.files.length > 0) {
+            fileNameDisplay.textContent = this.files[0].name;
+          } else {
+            fileNameDisplay.textContent = 'Selecionar vídeo';
+          }
+        });
+      }
+      
+      // Alternar modo escuro/claro
+      const themeToggle = document.getElementById('theme-toggle');
+      
+      // Esta interface já está no modo escuro por padrão, então não precisamos detectar preferências do usuário
+      
+      themeToggle.addEventListener('click', function() {
+        alert('Este tema já está usando modo escuro como padrão, similar à página de arquivos.');
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar {{ file_path }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      /* Tema claro (padrão) */
+      --bg-color: #f8f9fa;
+      --editor-bg: #ffffff;
+      --editor-text: #24292e;
+      --header-bg: #ffffff;
+      --header-text: #24292e;
+      --primary-color: #0366d6;
+      --danger-color: #d73a49;
+      --toolbar-bg: #f1f2f4;
+      --border-color: #e1e4e8;
+      --shadow: 0 2px 8px rgba(0,0,0,0.05);
+      --footer-bg: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      /* Tema escuro */
+      --bg-color: #0d1117;
+      --editor-bg: #161b22;
+      --editor-text: #c9d1d9;
+      --header-bg: #161b22;
+      --header-text: #f0f6fc;
+      --primary-color: #58a6ff;
+      --danger-color: #f85149;
+      --toolbar-bg: #21262d;
+      --border-color: #30363d;
+      --shadow: 0 2px 8px rgba(0,0,0,0.2);
+      --footer-bg: #161b22;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--header-text);
+      line-height: 1.6;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .edit-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .edit-header {
+      background-color: var(--header-bg);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .edit-header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .file-path {
+      font-weight: 400;
+      color: var(--primary-color);
+      word-break: break-all;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: var(--header-text);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 50%;
+    }
+
+    .edit-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background-color: var(--toolbar-bg);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      opacity: 0.9;
+    }
+
+    .editor-wrapper {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #editor {
+      width: 100%;
+      height: 100%;
+      border: none;
+      padding: 1rem;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 1rem;
+      line-height: 1.5;
+      background-color: var(--editor-bg);
+      color: var(--editor-text);
+      outline: none;
+      resize: none;
+      overflow-y: auto;
+    }
+
+    .mobile-toolbar {
+      display: none;
+      padding: 0.75rem;
+      background-color: var(--toolbar-bg);
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+      box-shadow: var(--shadow);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .mobile-toolbar-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .edit-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background-color: var(--footer-bg);
+      box-shadow: var(--shadow);
+      position: sticky;
+      bottom: 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .edit-footer a {
+      color: var(--primary-color);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .status-info {
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    /* Ajuste responsivo para mobile */
+    @media (max-width: 768px) {
+      .edit-toolbar {
+        display: none;
+      }
+
+      .mobile-toolbar {
+        display: block;
+      }
+
+      .edit-header h1 {
+        font-size: 1rem;
+      }
+
+      #editor {
+        font-size: 0.95rem;
+      }
+
+      .edit-footer {
+        padding: 0.5rem 0.75rem;
+      }
+
+      .edit-footer .status-info {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="edit-container">
+    <header class="edit-header">
+      <h1>✏️ Editando: <span class="file-path">/{{ file_path }}</span></h1>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Alternar tema">🌓</button>
+    </header>
+
+    <div class="edit-toolbar">
+      <div>
+        <a class="btn" href="/files/{{ parent_path }}">← Voltar</a>
+      </div>
+      <div>
+        <button class="btn btn-primary" type="submit" form="edit-form">💾 Salvar</button>
+        <a class="btn btn-danger" href="/files/{{ parent_path }}">✖ Cancelar</a>
+      </div>
+    </div>
+
+    <div class="editor-wrapper">
+      <form id="edit-form" action="/files/edit/{{ file_path }}" method="post">
+        <textarea id="editor" name="content" spellcheck="false">{{ content }}</textarea>
+      </form>
+    </div>
+
+    <div class="mobile-toolbar">
+      <div class="mobile-toolbar-actions">
+        <a class="btn" href="/files/{{ parent_path }}">← Voltar</a>
+        <div>
+          <button class="btn btn-primary" type="submit" form="edit-form">💾 Salvar</button>
+          <a class="btn btn-danger" href="/files/{{ parent_path }}">✖ Cancelar</a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="edit-footer">
+      <a href="/files/{{ parent_path }}">← Voltar</a>
+      <div class="status-info" id="status">Pronto</div>
+    </footer>
+  </div>
+
+  <script>
+    // Gerenciamento de tema
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verificar tema salvo ou preferência do sistema
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.body.setAttribute('data-theme', 'dark');
+      }
+      
+      // Alternar tema
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        if (document.body.getAttribute('data-theme') === 'dark') {
+          document.body.removeAttribute('data-theme');
+          localStorage.setItem('theme', 'light');
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      });
+      
+      // Adicionar atalho de teclado para salvar (Ctrl+S / Cmd+S)
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          document.getElementById('edit-form').submit();
+          document.getElementById('status').textContent = 'Salvando...';
+        }
+      });
+      
+      // Ajustar altura do editor
+      function adjustEditorHeight() {
+        const editor = document.getElementById('editor');
+        const header = document.querySelector('.edit-header');
+        const toolbar = window.innerWidth > 768 ? 
+                       document.querySelector('.edit-toolbar') : 
+                       document.querySelector('.mobile-toolbar');
+        const footer = document.querySelector('.edit-footer');
+        
+        const availableHeight = window.innerHeight - 
+                              (header.offsetHeight + 
+                               toolbar.offsetHeight + 
+                               footer.offsetHeight);
+        
+        editor.style.height = `${availableHeight}px`;
+      }
+      
+      adjustEditorHeight();
+      window.addEventListener('resize', adjustEditorHeight);
+      
+      // Auto-salvar indicador
+      const editor = document.getElementById('editor');
+      let timeout;
+      
+      editor.addEventListener('input', function() {
+        clearTimeout(timeout);
+        document.getElementById('status').textContent = 'Editando...';
+        
+        timeout = setTimeout(function() {
+          document.getElementById('status').textContent = 'Não salvo';
+        }, 500);
+      });
+    });
+  </script>
+</body>
+</html>
