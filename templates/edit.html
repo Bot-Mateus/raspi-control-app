@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Editar {{ file_path }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <!-- CodeMirror CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/dracula.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/eclipse.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/lint/lint.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/show-hint.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/search/matchesonscrollbar.min.css">
   <style>
     :root {
       /* Tema claro (padrão) */
@@ -14,10 +21,14 @@
       --header-text: #24292e;
       --primary-color: #0366d6;
       --danger-color: #d73a49;
+      --success-color: #28a745;
+      --warning-color: #ffc107;
       --toolbar-bg: #f1f2f4;
       --border-color: #e1e4e8;
       --shadow: 0 2px 8px rgba(0,0,0,0.05);
       --footer-bg: #ffffff;
+      --mobile-btn-bg: #ffffff;
+      --mobile-btn-border: #d0d7de;
     }
 
     [data-theme="dark"] {
@@ -29,10 +40,14 @@
       --header-text: #f0f6fc;
       --primary-color: #58a6ff;
       --danger-color: #f85149;
+      --success-color: #3fb950;
+      --warning-color: #d29922;
       --toolbar-bg: #21262d;
       --border-color: #30363d;
       --shadow: 0 2px 8px rgba(0,0,0,0.2);
       --footer-bg: #161b22;
+      --mobile-btn-bg: #21262d;
+      --mobile-btn-border: #30363d;
     }
 
     * {
@@ -48,6 +63,7 @@
       line-height: 1.6;
       height: 100vh;
       overflow: hidden;
+      touch-action: manipulation;
     }
 
     .edit-container {
@@ -67,6 +83,7 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
+      min-height: 60px;
     }
 
     .edit-header h1 {
@@ -86,8 +103,10 @@
       color: var(--header-text);
       font-size: 1.2rem;
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
+      padding: 0.5rem;
       border-radius: 50%;
+      min-width: 44px;
+      min-height: 44px; /* Tamanho mínimo para touch */
     }
 
     .edit-toolbar {
@@ -109,6 +128,8 @@
       font-size: 0.95rem;
       font-weight: 500;
       transition: all 0.2s ease;
+      min-height: 44px; /* Tamanho mínimo para touch */
+      text-decoration: none;
     }
 
     .btn-primary {
@@ -129,42 +150,121 @@
       opacity: 0.9;
     }
 
+    .btn-success {
+      background-color: var(--success-color);
+      color: #fff;
+    }
+
+    .btn-success:hover {
+      opacity: 0.9;
+    }
+
     .editor-wrapper {
       flex: 1;
       overflow: hidden;
       position: relative;
     }
 
-    #editor {
-      width: 100%;
+    /* Estilo personalizado para o CodeMirror */
+    .CodeMirror {
       height: 100%;
-      border: none;
-      padding: 1rem;
       font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
       font-size: 1rem;
       line-height: 1.5;
-      background-color: var(--editor-bg);
-      color: var(--editor-text);
-      outline: none;
-      resize: none;
-      overflow-y: auto;
     }
 
+    /* Mobile toolbar melhorada */
     .mobile-toolbar {
       display: none;
-      padding: 0.75rem;
-      background-color: var(--toolbar-bg);
+      background-color: var(--mobile-btn-bg);
+      border-top: 1px solid var(--mobile-btn-border);
       position: sticky;
       bottom: 0;
-      z-index: 10;
-      box-shadow: var(--shadow);
-      border-top: 1px solid var(--border-color);
+      z-index: 20;
+    }
+
+    .mobile-quick-actions {
+      display: flex;
+      overflow-x: auto;
+      padding: 0.5rem;
+      gap: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mobile-quick-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.5rem;
+      background-color: var(--mobile-btn-bg);
+      border: 1px solid var(--mobile-btn-border);
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      touch-action: manipulation;
+    }
+
+    .mobile-quick-btn:active {
+      background-color: var(--primary-color);
+      color: white;
     }
 
     .mobile-toolbar-actions {
       display: flex;
       justify-content: space-between;
-      gap: 0.5rem;
+      padding: 0.75rem;
+      border-top: 1px solid var(--mobile-btn-border);
+    }
+
+    .mobile-toolbar-actions .btn {
+      min-width: 120px;
+      justify-content: center;
+    }
+
+    /* Floating Action Button for mobile */
+    .fab-container {
+      position: fixed;
+      bottom: 120px;
+      right: 20px;
+      z-index: 30;
+      display: none;
+    }
+
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+    }
+
+    /* Error panel */
+    .error-panel {
+      background-color: var(--danger-color);
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      display: none;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .error-panel.show {
+      display: block;
     }
 
     .edit-footer {
@@ -185,11 +285,45 @@
       display: flex;
       align-items: center;
       gap: 0.25rem;
+      text-decoration: none;
     }
 
     .status-info {
       font-size: 0.8rem;
       color: #666;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .error-count {
+      background-color: var(--danger-color);
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+
+    /* Informação sobre o tipo de arquivo */
+    .file-info {
+      display: flex;
+      align-items: center;
+      margin-left: 1rem;
+      font-size: 0.8rem;
+      color: var(--header-text);
+      opacity: 0.7;
+    }
+
+    .file-type-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+      background-color: var(--primary-color);
+      color: white;
     }
 
     /* Ajuste responsivo para mobile */
@@ -198,24 +332,78 @@
         display: none;
       }
 
-      .mobile-toolbar {
+      .mobile-toolbar, .fab-container {
         display: block;
+      }
+
+      .edit-header {
+        padding: 0.75rem;
       }
 
       .edit-header h1 {
         font-size: 1rem;
       }
 
-      #editor {
-        font-size: 0.95rem;
+      .file-info {
+        margin-left: 0.5rem;
+      }
+
+      .CodeMirror {
+        font-size: 0.9rem;
       }
 
       .edit-footer {
         padding: 0.5rem 0.75rem;
       }
 
-      .edit-footer .status-info {
-        display: none;
+      .edit-footer .status-info .error-count {
+        display: inline-block;
+      }
+
+      /* Melhor experiência de toque */
+      .CodeMirror-scroll {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Ajustar altura no mobile considerando teclado virtual */
+      .editor-wrapper {
+        min-height: 0;
+      }
+    }
+
+    /* Estilo customizado para lint errors */
+    .CodeMirror-lint-tooltip {
+      font-size: 0.9rem;
+      max-width: 300px;
+      white-space: pre-wrap;
+    }
+
+    .CodeMirror-lint-mark-error {
+      background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAYAAAC09K7GAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sJDw4cOCW1/KIAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAHElEQVQI12NggIL/DAz/GdA5/xkY/qPKMDAwAADLZwf5rvm+LQAAAABJRU5ErkJggg==");
+      background-position: left bottom;
+      background-repeat: repeat-x;
+    }
+
+    /* Virtual keyboard adjustments */
+    @media screen and (max-height: 500px) and (orientation: landscape) {
+      .edit-header {
+        padding: 0.5rem;
+        min-height: 50px;
+      }
+      
+      .edit-header h1 {
+        font-size: 0.9rem;
+      }
+      
+      .mobile-toolbar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      
+      .fab-container {
+        bottom: 80px;
       }
     }
   </style>
@@ -223,16 +411,26 @@
 <body>
   <div class="edit-container">
     <header class="edit-header">
-      <h1>✏️ Editando: <span class="file-path">/{{ file_path }}</span></h1>
+      <div>
+        <h1>✏️ Editando: <span class="file-path">{{ file_path }}</span></h1>
+        <div class="file-info">
+          <span id="file-type-badge" class="file-type-badge">auto</span>
+        </div>
+      </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Alternar tema">🌓</button>
     </header>
+
+    <div class="error-panel" id="error-panel">
+      <span id="error-message"></span>
+    </div>
 
     <div class="edit-toolbar">
       <div>
         <a class="btn" href="/files/{{ parent_path }}">← Voltar</a>
       </div>
       <div>
-        <button class="btn btn-primary" type="submit" form="edit-form">💾 Salvar</button>
+        <button class="btn btn-success" id="format-button">🎨 Formatar</button>
+        <button class="btn btn-primary" id="save-button">💾 Salvar</button>
         <a class="btn btn-danger" href="/files/{{ parent_path }}">✖ Cancelar</a>
       </div>
     </div>
@@ -243,85 +441,504 @@
       </form>
     </div>
 
+    <!-- Mobile Toolbar -->
     <div class="mobile-toolbar">
+      <div class="mobile-quick-actions">
+        <button class="mobile-quick-btn" id="mobile-undo" title="Desfazer">↶</button>
+        <button class="mobile-quick-btn" id="mobile-redo" title="Refazer">↷</button>
+        <button class="mobile-quick-btn" id="mobile-indent" title="Indentar">→</button>
+        <button class="mobile-quick-btn" id="mobile-outdent" title="Desindentar">←</button>
+        <button class="mobile-quick-btn" id="mobile-comment" title="Comentar">//</button>
+        <button class="mobile-quick-btn" id="mobile-find" title="Buscar">🔍</button>
+        <button class="mobile-quick-btn" id="mobile-format" title="Formatar">🎨</button>
+        <button class="mobile-quick-btn" id="mobile-fullscreen" title="Tela cheia">⛶</button>
+      </div>
       <div class="mobile-toolbar-actions">
         <a class="btn" href="/files/{{ parent_path }}">← Voltar</a>
-        <div>
-          <button class="btn btn-primary" type="submit" form="edit-form">💾 Salvar</button>
-          <a class="btn btn-danger" href="/files/{{ parent_path }}">✖ Cancelar</a>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-primary" id="mobile-save-button">💾 Salvar</button>
+          <a class="btn btn-danger" href="/files/{{ parent_path }}">✖</a>
         </div>
       </div>
     </div>
 
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+      <button class="fab" id="fab-save" title="Salvar">💾</button>
+    </div>
+
     <footer class="edit-footer">
       <a href="/files/{{ parent_path }}">← Voltar</a>
-      <div class="status-info" id="status">Pronto</div>
+      <div class="status-info" id="status">
+        <span id="status-text">Pronto</span>
+        <span class="error-count" id="error-count" style="display: none;">0 erros</span>
+      </div>
     </footer>
   </div>
 
+  <!-- CodeMirror JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+  
+  <!-- Modos de linguagem -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/markdown/markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/php/php.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/shell/shell.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/yaml/yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/sql/sql.min.js"></script>
+  
+  <!-- Addons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/comment/comment.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/edit/closetag.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/fold/foldcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/fold/foldgutter.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/fold/brace-fold.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/fold/comment-fold.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/fold/indent-fold.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/fold/xml-fold.min.js"></script>
+  
+  <!-- Lint -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/lint/lint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/lint/javascript-lint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/lint/css-lint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/lint/html-lint.min.js"></script>
+  
+  <!-- Hint/Autocomplete -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/show-hint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/html-hint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/css-hint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/hint/javascript-hint.min.js"></script>
+  
+  <!-- Search -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/search/search.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/search/searchcursor.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/addon/dialog/dialog.min.js"></script>
+  
+  <!-- External linters -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.13.6/jshint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/csslint/1.0.5/csslint.min.js"></script>
+
   <script>
-    // Gerenciamento de tema
     document.addEventListener('DOMContentLoaded', function() {
       // Verificar tema salvo ou preferência do sistema
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDarkTheme = savedTheme === 'dark' || (!savedTheme && prefersDark);
       
-      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      if (isDarkTheme) {
         document.body.setAttribute('data-theme', 'dark');
       }
       
-      // Alternar tema
-      document.getElementById('theme-toggle').addEventListener('click', function() {
-        if (document.body.getAttribute('data-theme') === 'dark') {
-          document.body.removeAttribute('data-theme');
-          localStorage.setItem('theme', 'light');
-        } else {
-          document.body.setAttribute('data-theme', 'dark');
-          localStorage.setItem('theme', 'dark');
+      // Detectar o tipo de arquivo pela extensão
+      const filePath = "{{ file_path }}";
+      const fileExtension = filePath.split('.').pop().toLowerCase();
+      
+      // Mapeamento de extensões para modos CodeMirror
+      const extensionToMode = {
+        'html': 'htmlmixed',
+        'htm': 'htmlmixed',
+        'xhtml': 'htmlmixed',
+        'js': 'javascript',
+        'jsx': 'jsx',
+        'ts': 'typescript',
+        'tsx': 'typescript',
+        'css': 'css',
+        'scss': 'css',
+        'less': 'css',
+        'py': 'python',
+        'md': 'markdown',
+        'markdown': 'markdown',
+        'php': 'php',
+        'c': 'clike',
+        'cpp': 'clike',
+        'java': 'clike',
+        'cs': 'clike',
+        'sh': 'shell',
+        'bash': 'shell',
+        'yaml': 'yaml',
+        'yml': 'yaml',
+        'json': 'javascript',
+        'xml': 'xml',
+        'sql': 'sql',
+        'txt': 'text'
+      };
+      
+      // Mapeamento de extensões para nomes de exibição
+      const extensionToDisplayName = {
+        'html': 'HTML',
+        'htm': 'HTML',
+        'xhtml': 'HTML',
+        'js': 'JavaScript',
+        'jsx': 'JSX',
+        'ts': 'TypeScript',
+        'tsx': 'TSX',
+        'css': 'CSS',
+        'scss': 'SCSS',
+        'less': 'LESS',
+        'py': 'Python',
+        'md': 'Markdown',
+        'markdown': 'Markdown',
+        'php': 'PHP',
+        'c': 'C',
+        'cpp': 'C++',
+        'java': 'Java',
+        'cs': 'C#',
+        'sh': 'Shell',
+        'bash': 'Bash',
+        'yaml': 'YAML',
+        'yml': 'YAML',
+        'json': 'JSON',
+        'xml': 'XML',
+        'sql': 'SQL',
+        'txt': 'Texto'
+      };
+      
+      // Definir o modo com base na extensão do arquivo
+      const mode = extensionToMode[fileExtension] || 'text';
+      const fileDisplayName = extensionToDisplayName[fileExtension] || 'Texto';
+      
+      // Configurar linting baseado no tipo de arquivo
+      let lintOptions = false;
+      if (fileExtension === 'js') {
+        lintOptions = {
+          esversion: 2020,
+          asi: true,
+          browser: true,
+          node: true
+        };
+      } else if (fileExtension === 'css') {
+        lintOptions = true;
+      }
+      
+      // Atualizar o badge do tipo de arquivo
+      const fileTypeBadge = document.getElementById('file-type-badge');
+      fileTypeBadge.textContent = fileDisplayName;
+      
+      // Configuração do CodeMirror
+      const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+        mode: mode,
+        theme: isDarkTheme ? 'dracula' : 'eclipse',
+        lineNumbers: true,
+        lineWrapping: true,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        autoCloseBrackets: true,
+        autoCloseTags: true,
+        matchBrackets: true,
+        foldGutter: true,
+        lint: lintOptions,
+        gutters: lintOptions ? 
+          ["CodeMirror-lint-markers", "CodeMirror-linenumbers", "CodeMirror-foldgutter"] :
+          ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+          "Ctrl-S": function(cm) {
+            saveFile();
+          },
+          "Cmd-S": function(cm) {
+            saveFile();
+          },
+          "Tab": function(cm) {
+            if (cm.somethingSelected()) {
+              cm.indentSelection("add");
+            } else {
+              cm.replaceSelection("    ", "end", "+input");
+            }
+          },
+          "Shift-Tab": function(cm) {
+            cm.indentSelection("subtract");
+          },
+          "Ctrl-/": function(cm) {
+            cm.toggleComment();
+          },
+          "Cmd-/": function(cm) {
+            cm.toggleComment();
+          },
+          "F11": function(cm) {
+            toggleFullscreen();
+          },
+          "Esc": function(cm) {
+            if (document.fullscreenElement) {
+              document.exitFullscreen();
+            }
+          },
+          "Ctrl-F": "findPersistent",
+          "Cmd-F": "findPersistent",
+          "Ctrl-Space": "autocomplete"
         }
       });
       
-      // Adicionar atalho de teclado para salvar (Ctrl+S / Cmd+S)
-      document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-          e.preventDefault();
-          document.getElementById('edit-form').submit();
-          document.getElementById('status').textContent = 'Salvando...';
+      // Função para salvar arquivo
+      function saveFile() {
+        editor.save();
+        document.getElementById('edit-form').submit();
+        document.getElementById('status-text').textContent = 'Salvando...';
+      }
+      
+      // Função para alternar tela cheia
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
+      
+      // Função para formatar código (básica)
+      function formatCode() {
+        const cursor = editor.getCursor();
+        const content = editor.getValue();
+        
+        if (fileExtension === 'json') {
+          try {
+            const formatted = JSON.stringify(JSON.parse(content), null, 2);
+            editor.setValue(formatted);
+            editor.setCursor(cursor);
+            showSuccess('Código formatado com sucesso!');
+          } catch (e) {
+            showError('Erro ao formatar JSON: ' + e.message);
+          }
+        } else {
+          // Formatação básica - reindentação
+          editor.operation(function() {
+            for (let i = 0; i < editor.lineCount(); i++) {
+              editor.indentLine(i);
+            }
+          });
+          showSuccess('Código reindentado!');
+        }
+      }
+      
+      // Função para mostrar erros
+      function showError(message) {
+        const errorPanel = document.getElementById('error-panel');
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = message;
+        errorPanel.classList.add('show');
+        
+        setTimeout(() => {
+          errorPanel.classList.remove('show');
+        }, 5000);
+      }
+      
+      // Função para mostrar mensagens de sucesso
+      function showSuccess(message) {
+        const statusText = document.getElementById('status-text');
+        const originalText = statusText.textContent;
+        statusText.textContent = message;
+        statusText.style.color = 'var(--success-color)';
+        
+        setTimeout(() => {
+          statusText.textContent = originalText;
+          statusText.style.color = '';
+        }, 2000);
+      }
+      
+      // Contador de erros de lint
+      let errorCount = 0;
+      
+      // Detectar mudanças de lint
+      editor.on('lintingDone', function() {
+        const marks = editor.state.lint.marked;
+        errorCount = marks ? marks.length : 0;
+        
+        const errorCountElement = document.getElementById('error-count');
+        if (errorCount > 0) {
+          errorCountElement.textContent = `${errorCount} erro${errorCount > 1 ? 's' : ''}`;
+          errorCountElement.style.display = 'inline-block';
+        } else {
+          errorCountElement.style.display = 'none';
         }
       });
       
       // Ajustar altura do editor
       function adjustEditorHeight() {
-        const editor = document.getElementById('editor');
         const header = document.querySelector('.edit-header');
         const toolbar = window.innerWidth > 768 ? 
-                       document.querySelector('.edit-toolbar') : 
-                       document.querySelector('.mobile-toolbar');
+                      document.querySelector('.edit-toolbar') : 
+                      document.querySelector('.mobile-toolbar');
         const footer = document.querySelector('.edit-footer');
+        const errorPanel = document.querySelector('.error-panel');
         
         const availableHeight = window.innerHeight - 
-                              (header.offsetHeight + 
-                               toolbar.offsetHeight + 
-                               footer.offsetHeight);
+                             (header.offsetHeight + 
+                              toolbar.offsetHeight + 
+                              footer.offsetHeight +
+                              (errorPanel.classList.contains('show') ? errorPanel.offsetHeight : 0));
         
-        editor.style.height = `${availableHeight}px`;
+        document.querySelector('.editor-wrapper').style.height = `${availableHeight}px`;
+        editor.setSize(null, availableHeight);
       }
       
       adjustEditorHeight();
       window.addEventListener('resize', adjustEditorHeight);
+      window.addEventListener('orientationchange', function() {
+        setTimeout(adjustEditorHeight, 500);
+      });
+      
+      // Alternar tema
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.body.getAttribute('data-theme') === 'dark';
+        
+        if (isDark) {
+          document.body.removeAttribute('data-theme');
+          localStorage.setItem('theme', 'light');
+          editor.setOption('theme', 'eclipse');
+        } else {
+          document.body.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+          editor.setOption('theme', 'dracula');
+        }
+      });
+      
+      // Event listeners para botões de salvar
+      document.getElementById('save-button').addEventListener('click', saveFile);
+      document.getElementById('mobile-save-button').addEventListener('click', saveFile);
+      document.getElementById('fab-save').addEventListener('click', saveFile);
+      
+      // Event listeners para formatação
+      document.getElementById('format-button').addEventListener('click', formatCode);
+      document.getElementById('mobile-format').addEventListener('click', formatCode);
+      
+      // Mobile quick actions
+      document.getElementById('mobile-undo').addEventListener('click', function() {
+        editor.undo();
+      });
+      
+      document.getElementById('mobile-redo').addEventListener('click', function() {
+        editor.redo();
+      });
+      
+      document.getElementById('mobile-indent').addEventListener('click', function() {
+        if (editor.somethingSelected()) {
+          editor.indentSelection("add");
+        } else {
+          const cursor = editor.getCursor();
+          editor.replaceRange("    ", cursor);
+        }
+      });
+      
+      document.getElementById('mobile-outdent').addEventListener('click', function() {
+        if (editor.somethingSelected()) {
+          editor.indentSelection("subtract");
+        } else {
+          const cursor = editor.getCursor();
+          const line = editor.getLine(cursor.line);
+          if (line.startsWith("    ")) {
+            editor.replaceRange("", {line: cursor.line, ch: 0}, {line: cursor.line, ch: 4});
+          }
+        }
+      });
+      
+      document.getElementById('mobile-comment').addEventListener('click', function() {
+        editor.toggleComment();
+      });
+      
+      document.getElementById('mobile-find').addEventListener('click', function() {
+        editor.execCommand("findPersistent");
+      });
+      
+      document.getElementById('mobile-fullscreen').addEventListener('click', toggleFullscreen);
       
       // Auto-salvar indicador
-      const editor = document.getElementById('editor');
       let timeout;
-      
-      editor.addEventListener('input', function() {
+      editor.on('change', function() {
         clearTimeout(timeout);
-        document.getElementById('status').textContent = 'Editando...';
+        document.getElementById('status-text').textContent = 'Editando...';
         
         timeout = setTimeout(function() {
-          document.getElementById('status').textContent = 'Não salvo';
+          document.getElementById('status-text').textContent = 'Não salvo';
         }, 500);
       });
+      
+      // Detectar mudanças na orientação para ajustar layout
+      function handleOrientationChange() {
+        if (window.innerHeight < 500 && window.innerWidth > window.innerHeight) {
+          // Landscape em dispositivo pequeno - esconder alguns elementos
+          document.body.classList.add('landscape-mode');
+        } else {
+          document.body.classList.remove('landscape-mode');
+        }
+      }
+      
+      handleOrientationChange();
+      window.addEventListener('resize', handleOrientationChange);
+      
+      // Prevenir zoom no input em iOS
+      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        const viewport = document.querySelector('meta[name=viewport]');
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+        
+        // Ajustar quando o teclado virtual aparece/desaparece
+        let initialViewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        
+        function handleViewportChange() {
+          const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+          const heightDifference = initialViewportHeight - currentHeight;
+          
+          if (heightDifference > 150) {
+            // Teclado provavelmente visível
+            document.body.classList.add('keyboard-visible');
+            const editorWrapper = document.querySelector('.editor-wrapper');
+            editorWrapper.style.height = `${currentHeight - 200}px`;
+          } else {
+            // Teclado provavelmente oculto
+            document.body.classList.remove('keyboard-visible');
+            adjustEditorHeight();
+          }
+        }
+        
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', handleViewportChange);
+        }
+      }
+      
+      // Melhorar experiência de toque
+      let touchStartY = 0;
+      let touchEndY = 0;
+      
+      editor.getWrapperElement().addEventListener('touchstart', function(e) {
+        touchStartY = e.changedTouches[0].screenY;
+      });
+      
+      editor.getWrapperElement().addEventListener('touchend', function(e) {
+        touchEndY = e.changedTouches[0].screenY;
+        
+        // Se foi um swipe para baixo na parte superior, mostrar/esconder toolbar
+        if (touchEndY - touchStartY > 50 && touchStartY < 100) {
+          const mobileToolbar = document.querySelector('.mobile-toolbar');
+          mobileToolbar.style.transform = mobileToolbar.style.transform === 'translateY(100%)' ? 
+            'translateY(0)' : 'translateY(100%)';
+        }
+      });
+      
+      // Adicionar feedback visual para botões mobile
+      const mobileButtons = document.querySelectorAll('.mobile-quick-btn');
+      mobileButtons.forEach(button => {
+        button.addEventListener('touchstart', function() {
+          this.style.transform = 'scale(0.95)';
+        });
+        
+        button.addEventListener('touchend', function() {
+          this.style.transform = 'scale(1)';
+        });
+      });
+      
+      // Inicialização final
+      editor.refresh();
+      adjustEditorHeight();
+      
+      // Focar no editor após carregamento
+      setTimeout(() => {
+        editor.focus();
+      }, 100);
     });
   </script>
 </body>

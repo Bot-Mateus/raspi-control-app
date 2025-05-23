@@ -562,9 +562,46 @@
         width: 100%;
       }
     }
+      
+      .flash-container {
+          position: fixed;
+          top: 1rem;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 100;
+          width: 90%;
+          max-width: 500px;
+        }
+
+        .flash {
+          padding: 0.75rem 1rem;
+          border-radius: 6px;
+          margin-bottom: 0.5rem;
+          color: white;
+          font-weight: 500;
+        }
+
+        .flash-success { background-color: var(--success-color); }
+
+        .flash-danger  { background-color: var(--danger-color); }
+
+        .flash-warning { background-color: var(--warning-color); color: black; }
   </style>
 </head>
 <body>
+    <div class="container">
+    <!-- flashes -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-container">
+        {% for category,msg in messages %}
+        <div class="flash flash-{{ category }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+        
   <aside class="sidebar" id="sidebar">
     <div class="logo">
       <span class="logo-icon">🏠</span>
@@ -743,26 +780,35 @@
         <div class="actions">
           {% if ssd_connected %}
           <form action="/videos/upload" method="post" enctype="multipart/form-data" style="width:100%;">
-            <div class="form-group file-input">
-              <input type="file" id="file-upload" name="file" accept="video/*" required>
-              <label for="file-upload">
+              <div class="form-group">
+                <label for="target_dir">Salvar em:</label>
+                <select class="form-control" name="target_dir" id="target_dir">
+                  <option value="">/ (raiz)</option>
+                  {% for d in upload_dirs %}
+                  <option value="{{ d }}">/{{ d }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="form-group file-input">
+                <input type="file" id="file-upload" name="file" accept="video/*" required>
+                <label for="file-upload">
+                  <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  <span id="file-name">Selecionar vídeo</span>
+                </label>
+              </div>
+              <button class="btn btn-primary" type="submit" style="width:100%;">
                 <svg viewBox="0 0 24 24" width="16" height="16">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="17 8 12 3 7 8"></polyline>
                   <line x1="12" y1="3" x2="12" y2="15"></line>
                 </svg>
-                <span id="file-name">Selecionar vídeo</span>
-              </label>
-            </div>
-            <button class="btn btn-primary" type="submit" style="width:100%;">
-              <svg viewBox="0 0 24 24" width="16" height="16">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              Enviar
-            </button>
-          </form>
+                Enviar
+              </button>
+            </form>
           {% else %}
           <button class="btn btn-outline" disabled>
             <svg viewBox="0 0 24 24" width="16" height="16">
